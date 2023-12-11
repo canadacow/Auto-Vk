@@ -7323,7 +7323,7 @@ namespace avk
 		return actionTypeCommand;
 	}
 
-	avk::command::action_type_command copy_buffer_to_image_layer_mip_level(avk::resource_argument<buffer_t> aSrcBuffer, avk::resource_argument<image_t> aDstImage, uint32_t aDstLayer, uint32_t aDstLevel, avk::layout::image_layout aDstImageLayout, vk::ImageAspectFlags aImageAspectFlags)
+	avk::command::action_type_command copy_buffer_to_image_layer_mip_level(avk::resource_argument<buffer_t> aSrcBuffer, avk::resource_argument<image_t> aDstImage, uint32_t aDstLayer, uint32_t aDstLevel, avk::layout::image_layout aDstImageLayout, vk::ImageAspectFlags aImageAspectFlags, std::optional<vk::DeviceSize> aSrcOffset)
 	{
 		auto extent = aDstImage->create_info().extent;
 		extent.width  = extent.width  > 1u ? extent.width  >> aDstLevel : 1u;
@@ -7340,13 +7340,13 @@ namespace avk
 				lRoot = aSrcBuffer->root_ptr(),
 				lSrcHandle = aSrcBuffer->handle(),
 				lDstHandle = aDstImage->handle(),
-				aDstLayer, aDstLevel, aDstImageLayout, aImageAspectFlags,
+				aDstLayer, aDstLevel, aDstImageLayout, aImageAspectFlags, aSrcOffset,
 				extent
 			](avk::command_buffer_t& cb) {
 				// The bufferRowLength and bufferImageHeight fields specify how the pixels are laid out in memory. For example, you could have some padding 
 				// bytes between rows of the image. Specifying 0 for both indicates that the pixels are simply tightly packed like they are in our case. [3]
 				const vk::BufferImageCopy region {
-					0, 0u, 0u,
+					aSrcOffset.value_or(0), 0u, 0u,
 					vk::ImageSubresourceLayers{ aImageAspectFlags, aDstLevel, aDstLayer, 1u },
 					vk::Offset3D{ 0, 0, 0 }, extent
 				};
